@@ -3,350 +3,325 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kemahiran Pemulihan: Operasi Tolak (Pembelajaran)</title>
+  <title>Matematik Ceria: Operasi Tolak & Kaitan Tambah</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
   <style>
-    body { box-sizing: border-box; }
-    .activity-card { min-height: 400px; }
-    .number-card { transition: all .3s ease; cursor: pointer; }
-    .number-card:hover { transform: scale(1.05); }
-    .dragging { opacity: .5; transform: rotate(5deg); }
-
-    /* Drop zone (umum) */
-    .drop-zone {
-      border: 2px dashed #cbd5e1;
-      transition: all .3s ease;
-      min-width: 60px;
-      min-height: 60px;
-    }
-    .drop-zone.drag-over { border-color: #3b82f6; background-color: #eff6ff; }
-
-    /* Salah */
-    @keyframes shake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      50% { transform: translateX(5px); }
-      75% { transform: translateX(-5px); }
-      100% { transform: translateX(0); }
-    }
-    .shake { animation: shake 0.5s ease; }
-
-    /* Zon sudah diisi */
-    .drop-zone-filled {
-      border-style: solid;
-      border-color: #4ade80;
-      background-color: #f0fdf4;
+    /* --- UI STYLE (TEMPLATE HIJAU - MASTER REFERENCE) --- */
+    body { 
+        font-family: 'Fredoka', sans-serif; 
+        background-color: #f0fdf4; 
+        background-image: radial-gradient(#86efac 2px, transparent 2px); 
+        background-size: 30px 30px; 
     }
     
-    /* Untuk Aktiviti 3 (Mesin Tolak) */
-    .lazim-box { 
-      width: 70px; height: 70px; 
-      display: flex; align-items: center; justify-content: center; 
-      font-size: 2.25rem; font-weight: bold;
-      border: 2px solid #e5e7eb; border-radius: 0.5rem;
+    .game-card { 
+        background: white; 
+        border: 4px solid #475569; 
+        box-shadow: 8px 8px 0px #00000020; 
+        border-radius: 1.5rem; 
+        min-height: 600px; 
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
     }
-    .lazim-box.pinjam {
-      text-decoration: line-through;
-      color: #ef4444;
-      background: #fee2e2;
+    
+    /* Buttons & Animations */
+    .btn-3d { 
+        transition: all 0.1s; 
+        border-bottom-width: 6px; 
+        border-color: rgba(0,0,0,0.2); 
+        transform: translateY(0); 
+        cursor: pointer; 
+        display: inline-block; 
     }
-    .lazim-box.dapat {
-      color: #22c55e;
-      background: #dcfce7;
-      border-color: #22c55e;
-    }
+    .btn-3d:active:not(:disabled) { transform: translateY(4px); border-bottom-width: 2px; box-shadow: none; }
+    .btn-3d:disabled { opacity: 0.6; cursor: not-allowed; border-bottom-width: 6px; filter: grayscale(100%); }
 
-    /* --- PATCH: Bumbung Segitiga (SVG + overlay) --- */
-    .roof-wrap{position:relative;width:212px;height:120px;}
-    .roof-svg{display:block;width:212px;height:120px;}
-    #house-roof{
+    .shake { animation: shake 0.4s ease-in-out; border-color: #ef4444 !important; background-color: #fee2e2 !important; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px) rotate(-5deg); } 75% { transform: translateX(8px) rotate(5deg); } }
+
+    /* --- DRAG & DROP STYLES (DARI KOD KEDUA) --- */
+    .drop-zone { border: 3px dashed #94a3b8; background-color: #f8fafc; transition: all .3s ease; border-radius: 1rem; min-height: 60px; }
+    .drop-zone.drag-over { border-color: #22c55e; background-color: #dcfce7; transform: scale(1.02); }
+    .drop-zone-filled { border: 3px solid #22c55e; background-color: #dcfce7; }
+    .dragging { opacity: 0.5; transform: rotate(5deg) scale(1.1); }
+    
+    .number-card { transition: all 0.2s; cursor: grab; user-select: none; }
+    .number-card:active { cursor: grabbing; }
+
+    /* --- STYLE KHUSUS AKTIVITI --- */
+    
+    /* Aktiviti 2: Rumah Fakta */
+    .roof-wrap { position:relative; width:212px; height:120px; margin: 0 auto; }
+    .roof-svg { display:block; width:212px; height:120px; }
+    #house-roof {
       position:absolute; inset:0;
       clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
       background: transparent;
       display:flex; align-items:center; justify-content:center;
-      font-weight:700; font-size:1.5rem;
-      border: none; /* border tak perlu, garisan guna stroke SVG */
-      padding-top: 35px; /* bagi ruang teks tengah bumbung */
+      font-weight:700; font-size:1.8rem; color: #374151; padding-top: 35px;
     }
+
+    /* Aktiviti 3: Mesin Tolak (Konsisten dgn Master Reference) */
+    .lazim-box { 
+      width: 70px; height: 80px; 
+      display: flex; align-items: center; justify-content: center; 
+      font-size: 2.5rem; font-weight: bold; color: #1e293b;
+      border: 3px solid #cbd5e1; border-radius: 0.75rem;
+      background-color: white; position: relative;
+    }
+    .lazim-box.pinjam { color: #ef4444; text-decoration: line-through; opacity: 0.5; background: #fee2e2; border-color: #ef4444; }
+    .lazim-box.dapat { color: #15803d; background: #dcfce7; border-color: #22c55e; animation: pop 0.3s ease; }
+    
+    /* Label Pinjam (Hijau Kecil Atas) */
+    .num-atas {
+        position: absolute; top: -20px; right: -10px;
+        background: #dcfce7; border: 2px solid #22c55e; color: #15803d;
+        font-size: 1.2rem; padding: 0 6px; border-radius: 6px; z-index: 10;
+    }
+
+    /* Aktiviti 4: Bedah Cerita */
+    .clickable-word { cursor: pointer; border-bottom: 3px dotted #f97316; transition: all 0.2s; }
+    .clickable-word:hover { background-color: #ffedd5; color: #c2410c; transform: translateY(-2px); }
+    
+    @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
   </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-full">
+<body class="min-h-screen text-slate-800 pb-10">
 
-  <div class="bg-yellow-100 border-b-4 border-yellow-300 p-4 shadow-sm sticky top-0 z-10">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
+  <div class="fixed top-4 left-0 right-0 z-50 px-4 pointer-events-none">
+    <div class="max-w-4xl mx-auto bg-green-400 border-4 border-green-600 rounded-full px-6 py-3 shadow-xl flex items-center justify-between pointer-events-auto transform hover:scale-[1.01] transition-transform">
       <div class="flex items-center gap-3">
-        <span class="text-2xl">📚</span>
-        <span id="info-text" class="text-lg font-semibold text-gray-800">
-          Pilih aktiviti untuk mula belajar operasi tolak!
-        </span>
+        <span class="text-3xl animate-bounce">➖</span>
+        <span id="info-text" class="text-xl font-bold text-green-900 leading-none mt-1">Operasi Tolak & Kaitan Tambah</span>
       </div>
-      <button id="speak-btn"
-              class="bg-yellow-300 hover:bg-yellow-400 text-yellow-800 font-bold py-2 px-4 rounded-full text-xl transition-colors duration-200"
-              onclick="speakInfo()">
-        🔊
-      </button>
+      <button id="speak-btn" onclick="speakInfo()" class="bg-white hover:bg-green-50 text-green-600 border-2 border-green-200 rounded-full p-2 transition-colors shadow-sm">🔊</button>
     </div>
   </div>
+  <div class="h-24"></div>
 
-  <div class="max-w-6xl mx-auto p-6">
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 activity-card flex items-center justify-center">
-      <div id="activity-content" class="text-center w-full">
-        <div class="py-16">
-          <div class="text-6xl mb-4">🧮</div>
-          <h2 class="text-3xl font-bold text-gray-800 mb-4">
-            Kemahiran Pemulihan: Operasi Tolak
-          </h2>
-          <p class="text-xl text-gray-600 mb-8">
-            Jom teroka operasi tolak dan kaitan dengan tambah.
-          </p>
-          <div class="text-4xl">👇</div>
+  <div class="max-w-6xl mx-auto p-4">
+    
+    <div class="game-card p-8 mb-8">
+        <div id="activity-content" class="w-full relative z-10">
+            <div class="py-10 text-center">
+                <div class="text-8xl mb-6 animate-pulse">🧮</div>
+                <h2 class="text-5xl font-bold text-emerald-600 mb-4">Operasi Tolak</h2>
+                <p class="text-2xl text-slate-500 mb-8 font-semibold">Jom teroka kaitan dengan Tambah!</p>
+                <div class="text-4xl animate-bounce">👇</div>
+            </div>
         </div>
-      </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg p-6">
-      <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Pilih Aktiviti</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-        <button onclick="loadActivity(1)"
-                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
-          📏 Pembaris Ajaib
-        </button>
-        <button onclick="loadActivity(2)"
-                class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
-          🏠 Rumah Fakta
-        </button>
-        <button onclick="loadActivity(3)"
-                class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
-          🔢 Mesin Tolak Visual
-        </button>
-        <button onclick="loadActivity(4)"
-                class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
-          🍎 Bedah Cerita Buah
-        </button>
-        <button onclick="loadActivity(5)"
-                class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
-          ✏️ Bina Cerita Kamu
-        </button>
+    <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-6 border-2 border-white">
+      <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">🎮 Pilih Aktiviti</h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <button onclick="loadActivity(1)" class="btn-3d bg-blue-500 text-white font-bold py-4 px-2 rounded-xl text-lg">📏 Pembaris Ajaib</button>
+        <button onclick="loadActivity(2)" class="btn-3d bg-emerald-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🏠 Keluarga Fakta</button>
+        <button onclick="loadActivity(3)" class="btn-3d bg-violet-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🔢 Mesin Tolak</button>
+        <button onclick="loadActivity(4)" class="btn-3d bg-orange-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🍎 Bedah Cerita</button>
+        <button onclick="loadActivity(5)" class="btn-3d bg-rose-500 text-white font-bold py-4 px-2 rounded-xl text-lg">✏️ Bina Cerita</button>
       </div>
 
-      <div class="flex justify-center gap-4">
-        <button onclick="clearActivity()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg text-lg transition-colors duration-200">
-          🧹 Bersih
-        </button>
-        <button onclick="nextActivity()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg text-lg transition-colors duration-200">
-          ➡️ Seterusnya
-        </button>
+      <div class="flex justify-center gap-4 border-t-2 border-slate-100 pt-6">
+        <button onclick="clearActivity()" class="btn-3d bg-slate-400 text-white font-bold py-2 px-6 rounded-full text-lg">🏠 Menu</button>
+        <button onclick="nextActivity()" class="btn-3d bg-indigo-500 text-white font-bold py-2 px-8 rounded-full text-xl">Seterusnya ➡️</button>
       </div>
     </div>
   </div>
 
   <script>
+    /* --- STANDARD HELPERS --- */
     let currentActivity = 0;
     let ttsEnabled = false;
-    let currentInfo = "Pilih aktiviti untuk mula belajar operasi tolak!";
-    let draggedElement = null;
+    let currentInfo = "Selamat datang! Pilih aktiviti.";
+    let draggedElement = null; // Untuk Drag & Drop
 
-    /* ====== TTS ====== */
-    function speak(text) {
-      if (!ttsEnabled) return;
-      if (!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      setTimeout(() => {
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'ms-MY';
-        u.rate = 0.9; u.pitch = 1.05;
-        const voices = window.speechSynthesis.getVoices();
-        const ms = voices.find(v => v.lang === 'ms-MY' || v.lang?.startsWith('ms'));
-        if (ms) u.voice = ms;
-        window.speechSynthesis.speak(u);
-      }, 100);
-    }
-    function setInfo(text) { currentInfo = text; document.getElementById('info-text').textContent = text; }
-    function speakInfo() {
-      if (!ttsEnabled) {
-        ttsEnabled = true;
-        const btn = document.getElementById('speak-btn');
-        btn.classList.add('bg-green-300', 'hover:bg-green-400');
-        btn.classList.remove('bg-yellow-300', 'hover:bg-yellow-400');
-      }
-      speak(currentInfo);
-    }
+    function triggerWin() { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); }
 
-    /* ====== DnD helpers (DIKEMAS KINI) ====== */
-    function dragStart(e) { draggedElement = e.target; e.target.classList.add('dragging'); }
+    function speak(text) { 
+        if (!ttsEnabled || !('speechSynthesis' in window)) return; 
+        window.speechSynthesis.cancel(); 
+        const u = new SpeechSynthesisUtterance(text); 
+        u.lang = 'ms-MY'; u.rate = 0.9; u.pitch = 1.1; 
+        const voices = window.speechSynthesis.getVoices(); 
+        const ms = voices.find(v => v.lang === 'ms-MY' || v.lang?.startsWith('ms')); 
+        if (ms) u.voice = ms; 
+        window.speechSynthesis.speak(u); 
+    }
     
-    function dragEnd(e) { 
+    function setInfo(text) { 
+        currentInfo = text; 
+        const infoEl = document.getElementById('info-text'); 
+        infoEl.style.opacity = 0; 
+        setTimeout(() => { infoEl.textContent = text; infoEl.style.opacity = 1; }, 200); 
+    }
+    
+    function speakInfo() { 
+        if (!ttsEnabled) { 
+            ttsEnabled = true; 
+            document.getElementById('speak-btn').classList.add('bg-green-100', 'text-green-600'); 
+        } 
+        speak(currentInfo); 
+    }
+
+    /* --- DRAG & DROP LOGIC (Global) --- */
+    window.dragStart = function(e) { draggedElement = e.target; e.target.classList.add('dragging'); }
+    
+    window.dragEnd = function(e) { 
         e.target.classList.remove('dragging'); 
         document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
-        // reset warna bumbung ikut status isi
+        // Reset warna bumbung jika ada
         const poly = document.getElementById('roof-poly');
-        if (poly) {
-          const roofFilled = document.getElementById('house-roof').classList.contains('drop-zone-filled');
-          poly.setAttribute('stroke', roofFilled ? '#4ade80' : '#9ca3af');
+        const roof = document.getElementById('house-roof');
+        if (poly && roof) {
+            const filled = roof.classList.contains('drop-zone-filled');
+            poly.setAttribute('stroke', filled ? '#22c55e' : '#94a3b8');
         }
     }
 
-    function allowDrop(e) { 
+    window.allowDrop = function(e) { 
         e.preventDefault(); 
         if (e.currentTarget.id === 'house-roof') {
-          const poly = document.getElementById('roof-poly');
-          if (poly) poly.setAttribute('stroke', '#3b82f6');
+            const poly = document.getElementById('roof-poly');
+            if (poly) poly.setAttribute('stroke', '#3b82f6'); 
         } else if (e.currentTarget.classList.contains('drop-zone')) {
-          e.currentTarget.classList.add('drag-over'); 
+            e.currentTarget.classList.add('drag-over'); 
         }
     }
 
-    function dragLeave(e) { 
+    window.dragLeave = function(e) { 
         if (e.currentTarget.id === 'house-roof') {
-          const poly = document.getElementById('roof-poly');
-          if (poly) {
+            const poly = document.getElementById('roof-poly');
             const filled = e.currentTarget.classList.contains('drop-zone-filled');
-            poly.setAttribute('stroke', filled ? '#4ade80' : '#9ca3af');
-          }
+            if (poly) poly.setAttribute('stroke', filled ? '#22c55e' : '#94a3b8');
         } else if (e.currentTarget.classList.contains('drop-zone')) {
-          e.currentTarget.classList.remove('drag-over');
+            e.currentTarget.classList.remove('drag-over');
         }
     }
 
-    /* ====== Router ====== */
+    /* --- ROUTER --- */
     function loadActivity(n) {
       currentActivity = n;
       const content = document.getElementById('activity-content');
-      if (n === 1) return loadBarActivity(content);
-      if (n === 2) return loadFactFamilyActivity(content);
-      if (n === 3) return loadBentukLazimActivity(content);
-      if (n === 4) return loadWordProblemActivity(content);
-      if (n === 5) return loadStoryBuilderActivity(content);
+      content.style.opacity = 0;
+      setTimeout(() => {
+          if (n === 1) loadBarActivity(content);
+          if (n === 2) loadFactFamilyActivity(content);
+          if (n === 3) loadBentukLazimActivity(content);
+          if (n === 4) loadWordProblemActivity(content);
+          if (n === 5) loadStoryBuilderActivity(content);
+          content.style.opacity = 1;
+      }, 200);
     }
 
-    /* ====== Aktiviti 1: Pembaris Ajaib (Tambah) ====== */
+    function clearActivity() {
+        currentActivity = 0;
+        document.getElementById('activity-content').innerHTML = `<div class="py-10 text-center"><div class="text-8xl mb-6 animate-pulse">🧮</div><h2 class="text-5xl font-bold text-emerald-600 mb-4">Operasi Tolak</h2><p class="text-2xl text-slate-500 mb-8 font-semibold">Jom teroka operasi tolak dan kaitan dengan tambah.</p></div>`;
+        setInfo("Pilih aktiviti untuk mula belajar!");
+    }
+    function nextActivity() { let next = currentActivity + 1; if (next > 5) next = 1; loadActivity(next); }
+
+
+    /* =========================================
+       LOGIK AKTIVITI (GABUNGAN BARU)
+       ========================================= */
+
+    /* 1. Pembaris Ajaib */
     function loadBarActivity(content) {
-      setInfo("Jom lihat kaitan tambah. Seret blok 300 dan 400 ke pembaris.");
+      setInfo("Seret blok 300 dan 400 ke pembaris.");
       content.innerHTML = `
-        <h3 class="text-2xl font-bold text-blue-600 mb-6">📏 Pembaris Ajaib (Tambah)</h3>
-        
-        <div class="mb-6">
-          <h4 class="text-lg font-semibold mb-3">Blok Nombor (Seret ke bawah):</h4>
-          <div id="number-choices" class="flex flex-wrap justify-center gap-4">
-            <div class="number-card bg-blue-100 border-2 border-blue-300 rounded-lg p-4 text-2xl font-bold text-blue-800 cursor-move"
-                 draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-number="300" style="width: 150px;">
-              300
+        <h3 class="text-4xl font-bold text-blue-500 mb-6 text-center">📏 Pembaris Ajaib</h3>
+        <div class="bg-blue-50 rounded-3xl p-8 border-4 border-blue-200">
+            <p class="text-center text-slate-500 font-bold mb-4">Seret blok nombor ke bawah:</p>
+            <div id="number-choices" class="flex flex-wrap justify-center gap-4 mb-12">
+              <div class="number-card btn-3d bg-white border-2 border-blue-400 rounded-2xl p-4 text-3xl font-bold text-blue-600 shadow-md"
+                   draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-number="300" style="width: 150px; text-align:center;">300</div>
+              <div class="number-card btn-3d bg-white border-2 border-blue-400 rounded-2xl p-4 text-3xl font-bold text-blue-600 shadow-md"
+                   draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-number="400" style="width: 200px; text-align:center;">400</div>
             </div>
-            <div class="number-card bg-blue-100 border-2 border-blue-300 rounded-lg p-4 text-2xl font-bold text-blue-800 cursor-move"
-                 draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-number="400" style="width: 200px;">
-              400
-            </div>
-          </div>
-        </div>
-        
-        <div>
-          <h4 class="text-lg font-semibold mb-3">Pembaris (Letak di sini):</h4>
-          <div id="bar-track" class="flex items-center justify-start gap-0 w-full max-w-lg mx-auto bg-gray-100 rounded-lg p-2 min-h-24 drop-zone"
-               ondrop="dropOnBar(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-            </div>
-          <div id="bar-result" class="mt-4 text-2xl font-bold text-blue-700 min-h-8">
+            
+            <div class="bg-white p-6 rounded-2xl border-2 border-slate-200">
+                <p class="text-slate-400 font-bold mb-2">Letak di sini:</p>
+                <div id="bar-track" class="flex items-center justify-start w-full bg-slate-100 rounded-xl p-2 min-h-[100px] drop-zone"
+                     ondrop="dropOnBar(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                <div id="bar-result" class="mt-4 text-center min-h-[60px]"></div>
             </div>
         </div>
       `;
     }
     
-    function dropOnBar(e) {
+    window.dropOnBar = function(e) {
       e.preventDefault(); e.currentTarget.classList.remove('drag-over'); if (!draggedElement) return;
       e.currentTarget.appendChild(draggedElement);
-      draggedElement.setAttribute('draggable','false');
-      draggedElement.classList.remove('cursor-move');
-      draggedElement = null;
+      draggedElement.setAttribute('draggable','false'); draggedElement.style.cursor = 'default'; draggedElement.classList.remove('shadow-md', 'btn-3d');
 
       const track = document.getElementById('bar-track');
       const result = document.getElementById('bar-result');
       if (track.children.length === 2) {
-        result.innerHTML = `
-          <div class="text-center">
-            <div class="text-4xl">🎉</div>
-            300 + 400 = 700
-          </div>
-        `;
-        setInfo("Bagus! 300 tambah 400 sama dengan 700."); speak("Bagus! 300 tambah 400 sama dengan 700.");
-        track.classList.remove('drop-zone');
+        result.innerHTML = `<div class="animate-bounce inline-block text-5xl">🎉</div><div class="text-3xl font-bold text-blue-600 mt-2">300 + 400 = 700</div>`;
+        setInfo("Bagus! 300 tambah 400 jadi 700."); speak("Bagus! 300 tambah 400 sama dengan 700.");
         track.classList.add('drop-zone-filled');
+        triggerWin();
       }
     }
 
-
-    /* ====== Aktiviti 2: Rumah Keluarga Fakta (DIKEMAS KINI) ====== */
+    /* 2. Keluarga Fakta */
     function loadFactFamilyActivity(content) {
-      setInfo("Seret nombor 'Keseluruhan' (paling besar) ke bumbung, dan nombor 'Sebahagian' ke bilik.");
+      setInfo("Nombor besar di bumbung, nombor kecil di bilik.");
       const numbers = [700, 300, 400];
       content.innerHTML = `
-        <h3 class="text-2xl font-bold text-green-600 mb-6">🏠 Rumah Keluarga Fakta</h3>
-        
-        <div class="mb-6">
-          <h4 class="text-lg font-semibold mb-3">Kad Nombor (Seret ke rumah):</h4>
-          <div id="number-choices" class="flex flex-wrap justify-center gap-4">
+        <h3 class="text-4xl font-bold text-emerald-500 mb-6 text-center">🏠 Keluarga Fakta</h3>
+        <div class="bg-emerald-50 rounded-3xl p-6 border-4 border-emerald-200 max-w-2xl mx-auto">
+           <div id="number-choices" class="flex flex-wrap justify-center gap-4 mb-8 min-h-[80px]">
             ${numbers.sort(()=>Math.random()-0.5).map(num => `
-              <div class="number-card bg-green-100 border-2 border-green-300 rounded-lg p-4 text-2xl font-bold text-green-800 cursor-move"
-                   draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-number="${num}" data-type="${num === 700 ? 'whole' : 'part'}">
-                ${num}
-              </div>
+              <div class="btn-3d bg-white border-emerald-400 text-emerald-700 border-b-4 rounded-xl p-3 text-2xl font-bold number-card"
+                   draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-number="${num}" data-type="${num === 700 ? 'whole' : 'part'}">${num}</div>
             `).join('')}
           </div>
-        </div>
 
-        <div class="flex justify-center items-center">
-          <div class="flex flex-col items-center">
-            
-            <!-- PATCH: Bumbung SVG + overlay -->
+          <div class="flex flex-col items-center relative">
             <div class="roof-wrap">
-              <svg id="roof-svg" class="roof-svg" viewBox="0 0 212 120" aria-hidden="true">
-                <polygon id="roof-poly"
-                  points="106,0 0,120 212,120"
-                  fill="#f0fdf4" stroke="#9ca3af" stroke-width="2"/>
+              <svg id="roof-svg" class="roof-svg" viewBox="0 0 212 120">
+                <polygon id="roof-poly" points="106,0 0,120 212,120" fill="#ffffff" stroke="#94a3b8" stroke-width="4"/>
               </svg>
-              <div id="house-roof"
-                   class="drop-zone flex items-center justify-center font-bold text-2xl"
-                   ondrop="dropOnHouse(event, 'whole')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">__</div>
+              <div id="house-roof" class="drop-zone" ondrop="dropOnHouse(event, 'whole')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">__</div>
             </div>
-            
-            <div class="flex" style="margin-top: -1px;">
-              <div id="house-part1" class="drop-zone bg-green-50 p-6 flex items-center justify-center font-bold text-2xl" style="width: 105px; border-top: none; border-right: none;"
-                   ondrop="dropOnHouse(event, 'part')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">__</div>
-              <div id="house-part2" class="drop-zone bg-green-50 p-6 flex items-center justify-center font-bold text-2xl" style="width: 105px; border-top: none;"
-                   ondrop="dropOnHouse(event, 'part')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">__</div>
+            <div class="flex gap-1 -mt-1">
+              <div id="house-part1" class="drop-zone bg-white flex items-center justify-center font-bold text-2xl text-slate-600" style="width: 104px; height: 100px; border-radius: 0 0 0 1rem;" ondrop="dropOnHouse(event, 'part')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">__</div>
+              <div id="house-part2" class="drop-zone bg-white flex items-center justify-center font-bold text-2xl text-slate-600" style="width: 104px; height: 100px; border-radius: 0 0 1rem 0;" ondrop="dropOnHouse(event, 'part')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">__</div>
             </div>
           </div>
+          <div id="fact-family-result" class="mt-6 min-h-[100px]"></div>
         </div>
-        
-        <div id="fact-family-result" class="mt-6 text-xl font-semibold text-gray-700 min-h-16">
-          </div>
       `;
     }
 
-    function dropOnHouse(e, dropZoneType) {
+    window.dropOnHouse = function(e, dropZoneType) {
       e.preventDefault(); e.currentTarget.classList.remove('drag-over'); if (!draggedElement) return;
-      
       const draggedType = draggedElement.dataset.type;
       const draggedNumber = draggedElement.dataset.number;
 
       if (draggedType === dropZoneType) {
         e.currentTarget.innerHTML = draggedNumber;
-        
+        e.currentTarget.classList.add('drop-zone-filled');
         if (dropZoneType === 'whole') {
-          e.currentTarget.classList.add('drop-zone-filled');
-          const poly = document.getElementById('roof-poly');
-          if (poly) poly.setAttribute('stroke', '#4ade80'); // hijau bila betul
-        } else {
-          e.currentTarget.classList.add('drop-zone-filled');
+             const poly = document.getElementById('roof-poly');
+             if (poly) poly.setAttribute('stroke', '#22c55e');
         }
-
         draggedElement.remove(); draggedElement = null;
         checkFactFamily();
       } else {
-        const msg = dropZoneType === 'whole' 
-          ? "Bumbung untuk nombor paling besar (Keseluruhan)." 
-          : "Bilik untuk nombor kecil (Sebahagian).";
+        const msg = dropZoneType === 'whole' ? "Bumbung untuk nombor paling besar!" : "Bilik untuk nombor kecil!";
         setInfo(msg); speak(msg);
-        e.currentTarget.classList.add('shake');
-        setTimeout(()=>e.currentTarget.classList.remove('shake'), 500);
+        e.currentTarget.classList.add('shake'); setTimeout(()=>e.currentTarget.classList.remove('shake'), 500);
       }
     }
 
@@ -354,362 +329,186 @@
       const roof = document.getElementById('house-roof').innerHTML;
       const part1 = document.getElementById('house-part1').innerHTML;
       const part2 = document.getElementById('house-part2').innerHTML;
-
-      if (roof.trim() !== "__" && part1.trim() !== "__" && part2.trim() !== "__") {
+      if (roof !== "__" && part1 !== "__" && part2 !== "__") {
         const resultEl = document.getElementById('fact-family-result');
         resultEl.innerHTML = `
-          <div class="bg-green-100 border-2 border-green-300 rounded-lg p-4">
-            <p>Lihat! Ini adalah 'Keluarga Fakta':</p>
-            <ul class="list-disc list-inside mt-2">
-              <li>${part1} + ${part2} = ${roof}</li>
-              <li>${part2} + ${part1} = ${roof}</li>
-              <li class="font-bold text-green-800">${roof} - ${part1} = ${part2}</li>
-              <li class="font-bold text-green-800">${roof} - ${part2} = ${part1}</li>
-            </ul>
-          </div>
-        `;
-        setInfo("Syabas! Lihat, operasi tolak adalah songsangan operasi tambah.");
-        speak("Syabas! Lihat, operasi tolak adalah songsangan operasi tambah.");
+          <div class="bg-emerald-100 border-2 border-emerald-300 rounded-xl p-4 text-center">
+            <p class="font-bold text-emerald-800 mb-2">Lihat kaitan Tambah & Tolak:</p>
+            <div class="grid grid-cols-2 gap-2 text-lg font-mono font-bold text-emerald-900">
+                <div>${part1} + ${part2} = ${roof}</div><div>${part2} + ${part1} = ${roof}</div>
+                <div class="text-rose-600">${roof} - ${part1} = ${part2}</div><div class="text-rose-600">${roof} - ${part2} = ${part1}</div>
+            </div>
+          </div>`;
+        setInfo("Syabas! Operasi tolak adalah songsangan tambah."); triggerWin();
       }
     }
 
-    /* ====== Aktiviti 3: Mesin Tolak Visual (Bentuk Lazim) ====== */
+    /* 3. Mesin Tolak (Bentuk Lazim Visual) */
     function loadBentukLazimActivity(content) {
-      setInfo("Jom selesaikan 126 - 60. Klik butang 'Selesai Sa' untuk mula.");
+      setInfo("126 - 60. Klik 'Selesai Sa' untuk mula.");
       content.innerHTML = `
-        <h3 class="text-2xl font-bold text-purple-600 mb-6">🔢 Mesin Tolak Visual (Bentuk Lazim)</h3>
-        
-        <div class="flex justify-center gap-2 mb-4">
-          <div>
-            <div class="text-sm font-semibold text-center text-gray-500">Ratus</div>
-            <div id="ratus-1" class="lazim-box bg-gray-50">1</div>
-            <div id="ratus-2" class="lazim-box bg-gray-50 opacity-0">0</div>
-          </div>
-          <div>
-            <div class="text-sm font-semibold text-center text-gray-500">Puluh</div>
-            <div id="puluh-1" class="lazim-box bg-gray-50">2</div>
-            <div id="puluh-2" class="lazim-box bg-gray-50">6</div>
-          </div>
-          <div>
-            <div class="text-sm font-semibold text-center text-gray-500">Sa</div>
-            <div id="sa-1" class="lazim-box bg-gray-50">6</div>
-            <div id="sa-2" class="lazim-box bg-gray-50">0</div>
-          </div>
+        <h3 class="text-4xl font-bold text-violet-500 mb-6 text-center">🔢 Mesin Tolak</h3>
+        <div class="bg-violet-50 rounded-3xl p-8 border-4 border-violet-200 max-w-xl mx-auto">
+            <div class="flex justify-center gap-4 mb-2 text-sm font-bold text-slate-400 uppercase tracking-widest">
+                <div style="width:70px" class="text-center">Ra</div><div style="width:70px" class="text-center">Pu</div><div style="width:70px" class="text-center">Sa</div>
+            </div>
+            <div class="flex justify-center gap-4 mb-2">
+                <div id="ratus-1" class="lazim-box">1</div><div id="puluh-1" class="lazim-box">2</div><div id="sa-1" class="lazim-box">6</div>
+            </div>
+            <div class="flex justify-center gap-4 mb-4 relative">
+                <div class="absolute left-4 top-2 text-5xl font-bold text-rose-500">-</div>
+                <div class="lazim-box bg-transparent border-0 opacity-0"></div><div class="lazim-box">6</div><div class="lazim-box">0</div>
+            </div>
+            <div class="border-b-4 border-slate-400 w-3/4 mx-auto mb-4 rounded-full"></div>
+            <div class="flex justify-center gap-4 mb-8">
+                <div id="ratus-j" class="lazim-box bg-violet-100 text-violet-400">?</div><div id="puluh-j" class="lazim-box bg-violet-100 text-violet-400">?</div><div id="sa-j" class="lazim-box bg-violet-100 text-violet-400">?</div>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button id="btn-sa" onclick="selesaiSa()" class="btn-3d bg-violet-500 text-white font-bold py-3 rounded-xl text-lg">1. Selesai Sa</button>
+                <button id="btn-puluh" onclick="selesaiPuluh()" class="btn-3d bg-slate-300 text-white font-bold py-3 rounded-xl text-lg" disabled>2. Selesai Puluh</button>
+                <button id="btn-ratus" onclick="selesaiRatus()" class="btn-3d bg-slate-300 text-white font-bold py-3 rounded-xl text-lg" disabled>3. Selesai Ratus</button>
+            </div>
+            <p id="lazim-msg" class="text-center font-bold text-violet-600 mt-4 min-h-[30px]"></p>
         </div>
-        <hr class="my-4 border-t-4 border-gray-700 max-w-xs mx-auto">
-        
-        <div class="flex justify-center gap-2 mb-6">
-          <div id="ratus-j" class="lazim-box bg-purple-50">?</div>
-          <div id="puluh-j" class="lazim-box bg-purple-50">?</div>
-          <div id="sa-j" class="lazim-box bg-purple-50">?</div>
-        </div>
-
-        <div id="lazim-controls" class="flex flex-wrap justify-center gap-3">
-          <button id="btn-sa" onclick="selesaiSa()" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg">
-            1. Selesai Sa
-          </button>
-          <button id="btn-puluh" onclick="selesaiPuluh()" class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg" disabled>
-            2. Selesai Puluh
-          </button>
-          <button id="btn-ratus" onclick="selesaiRatus()" class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg" disabled>
-            3. Selesai Ratus
-          </button>
-        </div>
-        <p id="lazim-msg" class="text-purple-700 font-semibold mt-4 min-h-6"></p>
       `;
     }
 
-    function selesaiSa() {
-      document.getElementById('sa-j').textContent = '6';
-      document.getElementById('sa-j').classList.add('dapat');
-      setInfo("Bagus. 6 tolak 0 ialah 6. Sekarang, cuba selesaikan 'Puluh'.");
-      speak("Bagus. 6 tolak 0 ialah 6. Sekarang, cuba selesaikan 'Puluh'.");
-      document.getElementById('btn-sa').disabled = true;
-      document.getElementById('btn-puluh').disabled = false;
-      document.getElementById('btn-puluh').classList.replace('bg-gray-400', 'bg-purple-500');
+    window.selesaiSa = function() {
+      document.getElementById('sa-j').textContent = '6'; document.getElementById('sa-j').classList.add('dapat');
+      setInfo("6 tolak 0 ialah 6. Seterusnya Puluh."); speak("6 tolak 0 ialah 6.");
+      document.getElementById('btn-sa').disabled = true; document.getElementById('btn-sa').className = "btn-3d bg-slate-300 text-white font-bold py-3 rounded-xl text-lg";
+      const btnP = document.getElementById('btn-puluh'); btnP.disabled = false; btnP.className = "btn-3d bg-violet-500 text-white font-bold py-3 rounded-xl text-lg";
     }
 
-    function selesaiPuluh() {
-      const msg = document.getElementById('lazim-msg');
-      msg.textContent = "Oh tidak! 2 tidak boleh tolak 6. Kita perlu 'pinjam' dari 'Ratus'.";
-      setInfo(msg.textContent); speak(msg.textContent);
+    window.selesaiPuluh = function() {
+      setInfo("2 tak cukup. Pinjam dari Ratus."); speak("Pinjam dari Ratus.");
       document.getElementById('puluh-1').classList.add('shake');
-      setTimeout(() => document.getElementById('puluh-1').classList.remove('shake'), 500);
-
-      const btnPuluh = document.getElementById('btn-puluh');
-      btnPuluh.textContent = "2. Pinjam dari Ratus";
-      btnPuluh.onclick = pinjamRatus;
+      const btnP = document.getElementById('btn-puluh'); btnP.textContent = "🔄 Pinjam dari Ratus"; btnP.onclick = pinjamRatus;
     }
 
-    function pinjamRatus() {
-      const msg = document.getElementById('lazim-msg');
-      msg.textContent = "Bagus! '1' Ratus menjadi '0'. '2' Puluh menjadi '12'.";
-      setInfo(msg.textContent); speak(msg.textContent);
-      
+    window.pinjamRatus = function() {
       document.getElementById('ratus-1').classList.add('pinjam');
-      document.getElementById('ratus-1').textContent = '0';
+      document.getElementById('ratus-1').innerHTML = '<span class="num-atas">0</span>1';
       
       document.getElementById('puluh-1').classList.add('dapat');
-      document.getElementById('puluh-1').textContent = '12';
-
-      const btnPuluh = document.getElementById('btn-puluh');
-      btnPuluh.textContent = "2. Selesai Puluh (Semula)";
-      btnPuluh.onclick = selesaiPuluhSemula;
-    }
-    
-    function selesaiPuluhSemula() {
-      document.getElementById('puluh-j').textContent = '6';
-      document.getElementById('puluh-j').classList.add('dapat');
-      setInfo("Hebat! 12 tolak 6 ialah 6. Akhir sekali, 'Ratus'.");
-      speak("Hebat! 12 tolak 6 ialah 6. Akhir sekali, 'Ratus'.");
-      document.getElementById('btn-puluh').disabled = true;
-      document.getElementById('btn-ratus').disabled = false;
-      document.getElementById('btn-ratus').classList.replace('bg-gray-400', 'bg-purple-500');
+      document.getElementById('puluh-1').innerHTML = '<span class="num-atas">12</span>2';
+      
+      setInfo("Sekarang ada 12 Puluh. 12 tolak 6?"); speak("Sekarang 12 tolak 6.");
+      const btnP = document.getElementById('btn-puluh'); btnP.textContent = "✅ Selesai Puluh (12 - 6)"; btnP.onclick = selesaiPuluhSemula;
     }
 
-    function selesaiRatus() {
-      document.getElementById('ratus-j').textContent = '0';
-      document.getElementById('ratus-j').classList.add('dapat');
-      setInfo("Syabas! 0 tolak 0 ialah 0. Jawapannya ialah 66.");
-      speak("Syabas! 0 tolak 0 ialah 0. Jawapannya ialah 66.");
-      document.getElementById('btn-ratus').disabled = true;
-      document.getElementById('lazim-msg').textContent = "Jawapan: 126 - 60 = 66";
+    window.selesaiPuluhSemula = function() {
+      document.getElementById('puluh-j').textContent = '6'; document.getElementById('puluh-j').classList.add('dapat');
+      document.getElementById('btn-puluh').disabled = true; document.getElementById('btn-puluh').className = "btn-3d bg-slate-300 text-white font-bold py-3 rounded-xl text-lg";
+      const btnR = document.getElementById('btn-ratus'); btnR.disabled = false; btnR.className = "btn-3d bg-violet-500 text-white font-bold py-3 rounded-xl text-lg";
     }
 
-    /* ====== Aktiviti 4: Bedah Cerita Buah ====== */
+    window.selesaiRatus = function() {
+      document.getElementById('ratus-j').textContent = '0'; document.getElementById('ratus-j').classList.add('dapat');
+      setInfo("Siap! Jawapannya 66."); speak("Siap! Jawapannya 66.");
+      document.getElementById('btn-ratus').disabled = true; document.getElementById('btn-ratus').className = "btn-3d bg-slate-300 text-white font-bold py-3 rounded-xl text-lg";
+      triggerWin();
+    }
+
+    /* 4. Bedah Cerita */
     function loadWordProblemActivity(content) {
-      setInfo("Baca cerita. Klik pada nombor dalam cerita untuk masukkan ke dalam kotak.");
+      setInfo("Klik perkataan berwarna untuk isi kotak.");
       content.innerHTML = `
-        <h3 class="text-2xl font-bold text-orange-600 mb-6">🍎 Bedah Cerita Buah</h3>
-        
-        <div class="bg-orange-50 border border-orange-200 rounded-lg p-6 mb-6">
-          <p class="text-xl text-gray-700 leading-relaxed">
-            "Di dalam sebuah bakul ada 
-            <strong class="text-orange-700 underline decoration-dotted cursor-pointer hover:bg-orange-200"
-                    onclick="extractInfo('126', 'wp-jumlah')">
-              126 biji
-            </strong> 
-            buah-buahan. 
-            <strong class="text-orange-700 underline decoration-dotted cursor-pointer hover:bg-orange-200"
-                    onclick="extractInfo('60', 'wp-ambil')">
-              60 biji
-            </strong> 
-            adalah buah manggis dan bakinya adalah buah rambutan. Berapa bijikah buah rambutan dalam bakul itu?"
-          </p>
+        <h3 class="text-4xl font-bold text-orange-500 mb-6 text-center">🍎 Bedah Cerita</h3>
+        <div class="bg-orange-50 rounded-3xl p-6 border-4 border-orange-200 mb-8">
+            <p class="text-2xl text-slate-700 leading-relaxed font-medium text-center">
+                "Dalam bakul ada <strong class="clickable-word text-orange-600" onclick="extractInfo('126', 'wp-jumlah')">126 biji</strong> buah. 
+                <strong class="clickable-word text-orange-600" onclick="extractInfo('60', 'wp-ambil')">60 biji</strong> adalah manggis. Bakinya rambutan."
+            </p>
         </div>
-
-        <div class="grid md:grid-cols-3 gap-4 text-center">
-          <div class="bg-gray-100 rounded-lg p-4">
-            <div class="text-sm font-semibold text-gray-500 mb-2">Jumlah Keseluruhan</div>
-            <div id="wp-jumlah" class="text-3xl font-bold text-gray-800 drop-zone min-h-16 flex items-center justify-center">?</div>
-          </div>
-          <div class="bg-gray-100 rounded-lg p-4">
-            <div class="text-sm font-semibold text-gray-500 mb-2">Jumlah Diambil (Manggis)</div>
-            <div id="wp-ambil" class="text-3xl font-bold text-gray-800 drop-zone min-h-16 flex items-center justify-center">?</div>
-          </div>
-          <div class="bg-gray-100 rounded-lg p-4">
-            <div class="text-sm font-semibold text-gray-500 mb-2">Baki Dicari (Rambutan)</div>
-            <div id="wp-baki" class="text-3xl font-bold text-gray-800 min-h-16 flex items-center justify-center">?</div>
-          </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-2xl border-2 border-slate-200 text-center">
+                <div class="text-xs font-bold uppercase text-slate-400 mb-2">Jumlah</div>
+                <div id="wp-jumlah" class="text-3xl font-black text-slate-300 drop-zone flex items-center justify-center h-16">?</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border-2 border-slate-200 text-center">
+                <div class="text-xs font-bold uppercase text-slate-400 mb-2">Manggis</div>
+                <div id="wp-ambil" class="text-3xl font-black text-slate-300 drop-zone flex items-center justify-center h-16">?</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border-2 border-slate-200 text-center">
+                <div class="text-xs font-bold uppercase text-slate-400 mb-2">Rambutan (Baki)</div>
+                <div id="wp-baki" class="text-3xl font-black text-orange-600 flex items-center justify-center h-16">?</div>
+            </div>
         </div>
-        
-        <div id="wp-visual" class="mt-6 min-h-24">
-          </div>
+        <div id="wp-interaction" class="text-center opacity-50 pointer-events-none transition-opacity">
+            <p class="text-xl font-bold text-slate-600 mb-4">Kira: 126 - 60 = ?</p>
+            <div class="flex justify-center gap-2">
+                <input type="number" id="wp-answer" class="border-4 border-orange-300 rounded-xl p-3 text-2xl font-bold w-32 text-center outline-none focus:border-orange-500" placeholder="?">
+                <button onclick="checkWpAnswer(126, 60)" class="btn-3d bg-orange-500 text-white font-bold py-2 px-6 rounded-xl text-lg">Semak</button>
+            </div>
+            <p id="wp-feedback" class="mt-4 font-bold text-lg min-h-[30px]"></p>
+        </div>
       `;
     }
-
-    function extractInfo(number, targetId) {
-      const targetEl = document.getElementById(targetId);
-      targetEl.textContent = number;
-      targetEl.classList.add('drop-zone-filled');
-      targetEl.classList.remove('drop-zone');
-      
-      const msg = `Bagus! ${number} telah dimasukkan.`;
-      setInfo(msg); speak(msg);
-      
-      checkWordProblem();
+    window.extractInfo = function(val, id) {
+       const el = document.getElementById(id); el.textContent = val;
+       el.classList.remove('text-slate-300'); el.classList.add('text-slate-800', 'drop-zone-filled');
+       speak(val);
+       if(document.getElementById('wp-jumlah').textContent !== '?' && document.getElementById('wp-ambil').textContent !== '?') {
+           document.getElementById('wp-interaction').classList.remove('opacity-50', 'pointer-events-none');
+           setInfo("Sekarang, kira bakinya.");
+       }
     }
-    
-    function checkWordProblem() {
-      const jumlah = document.getElementById('wp-jumlah').textContent;
-      const ambil = document.getElementById('wp-ambil').textContent;
-      
-      if (jumlah !== '?' && ambil !== '?') {
-        const visualEl = document.getElementById('wp-visual');
-        visualEl.innerHTML = `
-          <div class="bg-orange-100 rounded-lg p-6">
-            <h4 class="text-lg font-bold text-orange-800 mb-2">Visualisasi:</h4>
-            <div class="w-full bg-gray-200 rounded-full h-8">
-              <div class="bg-orange-500 h-8 rounded-full" style="width: 100%;" title="Jumlah ${jumlah}">
-                <div class="bg-orange-800 h-8 rounded-l-full text-white flex items-center justify-center" style="width: ${ (parseInt(ambil) / parseInt(jumlah)) * 100 }%;" title="Manggis ${ambil}">
-                  ${ambil}
-                </div>
-              </div>
-            </div>
-            <div class="text-center mt-4">
-              <p class="text-2xl font-bold text-orange-900">Ayat Matematik:</p>
-              <p class="text-3xl font-mono">${jumlah} - ${ambil} = ?</p>
-            </div>
-
-            <div class="mt-4 flex justify-center items-center gap-2">
-              <input type="number" id="wp-answer" class="text-2xl font-bold p-2 w-32 rounded-lg border-2 border-gray-300 text-center" placeholder="?">
-              <button onclick="checkWpAnswer(${jumlah}, ${ambil})" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-5 rounded-lg text-lg">Semak</button>
-            </div>
-            <p id="wp-feedback" class="text-center text-lg font-semibold mt-2 min-h-6"></p>
-
-          </div>
-        `;
-        setInfo("Hebat! Maklumat lengkap. Sila masukkan jawapan.");
-        speak("Hebat! Maklumat lengkap. Sila masukkan jawapan.");
-      }
-    }
-    
-    function checkWpAnswer(num1, num2) {
-      const answerInput = document.getElementById('wp-answer');
-      const feedback = document.getElementById('wp-feedback');
-      const userAnswer = parseInt(answerInput.value);
-      const correctAnswer = parseInt(num1) - parseInt(num2);
-
-      if (userAnswer === correctAnswer) {
-        feedback.textContent = `Syabas! ${num1} - ${num2} = ${correctAnswer}.`;
-        feedback.className = 'text-center text-lg font-semibold mt-2 text-green-600';
-        answerInput.classList.add('border-green-500', 'bg-green-50');
-        answerInput.classList.remove('border-red-500', 'bg-red-50');
-        setInfo(feedback.textContent); speak(feedback.textContent);
-      } else {
-        feedback.textContent = "Jawapan kurang tepat. Cuba kira semula.";
-        feedback.className = 'text-center text-lg font-semibold mt-2 text-red-600';
-        answerInput.classList.add('border-red-500', 'bg-red-50', 'shake');
-        answerInput.classList.remove('border-green-500', 'bg-green-50');
-        setTimeout(() => answerInput.classList.remove('shake'), 500);
-        setInfo(feedback.textContent); speak(feedback.textContent);
-      }
+    window.checkWpAnswer = function(total, sub) {
+       const ans = parseInt(document.getElementById('wp-answer').value);
+       if(ans === (total - sub)) {
+           document.getElementById('wp-feedback').textContent = "Betul! 66 biji rambutan."; document.getElementById('wp-feedback').className = "mt-4 font-bold text-lg text-green-600";
+           triggerWin(); setInfo("Tahniah! Jawapan betul.");
+       } else {
+           document.getElementById('wp-feedback').textContent = "Salah. Cuba kira lagi."; document.getElementById('wp-feedback').className = "mt-4 font-bold text-lg text-rose-600";
+           document.getElementById('wp-answer').classList.add('shake'); setTimeout(()=>document.getElementById('wp-answer').classList.remove('shake'), 500);
+       }
     }
 
-
-    /* ====== Aktiviti 5: Bina Cerita Kamu ====== */
+    /* 5. Bina Cerita */
     function loadStoryBuilderActivity(content) {
-      setInfo("Pilih nombor dan benda untuk bina cerita matematik kamu sendiri.");
+      setInfo("Pilih nombor untuk bina cerita.");
       content.innerHTML = `
-        <h3 class="text-2xl font-bold text-red-600 mb-6">✏️ Bina Cerita Kamu</h3>
-        
-        <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6 text-2xl leading-relaxed">
-          Ali ada 
-          <select id="sb-num1" onchange="updateStory()" class="font-bold text-red-700 bg-white border-2 border-red-300 rounded-lg p-1 mx-1">
-            <option value="50">50</option>
-            <option value="80">80</option>
-            <option value="120">120</option>
-          </select>
-          biji 
-          <select id="sb-item" onchange="updateStory()" class="font-bold text-red-700 bg-white border-2 border-red-300 rounded-lg p-1 mx-1">
-            <option value="guli" data-img="https://cdn-icons-png.flaticon.com/512/3069/3069415.png">guli</option>
-            <option value="epal" data-img="https://cdn-icons-png.flaticon.com/512/415/415733.png">epal</option>
-            <option value="buku" data-img="https://cdn-icons-png.flaticon.com/512/29/29302.png">buku</option>
-          </select>.
-          Dia beri 
-          <select id="sb-num2" onchange="updateStory()" class="font-bold text-red-700 bg-white border-2 border-red-300 rounded-lg p-1 mx-1">
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-          </select>
-          biji kepada Siti.
-          <span id="sb-result" class="block mt-4 text-xl font-semibold bg-red-100 p-4 rounded-lg">
-            </span>
-        </div>
-        
-        <div class="text-center">
-          <img id="sb-image" src="" alt="Visual" class="h-32 w-32 mx-auto object-contain">
-          <p id="sb-math" class="text-3xl font-mono font-bold text-red-800 mt-4"></p>
-          
-          <div class="mt-4 flex justify-center items-center gap-2">
-            <input type="number" id="sb-answer" class="text-2xl font-bold p-2 w-32 rounded-lg border-2 border-gray-300 text-center" placeholder="?">
-            <button onclick="checkSbAnswer()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-5 rounded-lg text-lg">Semak</button>
-          </div>
-          <p id="sb-feedback" class="text-lg font-semibold mt-2 min-h-6"></p>
-
+        <h3 class="text-4xl font-bold text-rose-500 mb-6 text-center">✏️ Bina Cerita</h3>
+        <div class="bg-white rounded-3xl p-8 border-4 border-rose-200 max-w-2xl mx-auto text-center shadow-sm">
+            <div class="text-2xl leading-loose font-medium text-slate-700">
+                Ali ada <select id="sb-num1" onchange="updateStory()" class="font-bold text-rose-600 bg-rose-50 border-2 border-rose-200 rounded-lg px-2 py-1 cursor-pointer hover:bg-rose-100"><option value="50">50</option><option value="80">80</option><option value="120">120</option></select>
+                biji <select id="sb-item" onchange="updateStory()" class="font-bold text-rose-600 bg-rose-50 border-2 border-rose-200 rounded-lg px-2 py-1 cursor-pointer hover:bg-rose-100"><option value="guli">guli 🔮</option><option value="epal">epal 🍎</option><option value="buku">buku 📚</option></select>.
+                <br>Dia beri <select id="sb-num2" onchange="updateStory()" class="font-bold text-rose-600 bg-rose-50 border-2 border-rose-200 rounded-lg px-2 py-1 cursor-pointer hover:bg-rose-100"><option value="10">10</option><option value="20">20</option><option value="30">30</option></select> kepada Siti.
+            </div>
+            <div class="mt-8 bg-rose-50 p-4 rounded-2xl">
+                <p class="text-slate-500 font-bold text-sm uppercase mb-2">Ayat Matematik:</p>
+                <p id="sb-math" class="text-4xl font-black text-rose-700 mb-4 tracking-widest">50 - 10 = ?</p>
+                <div class="flex justify-center gap-3">
+                    <input type="number" id="sb-answer" class="border-4 border-rose-300 rounded-xl p-3 text-2xl font-bold w-32 text-center outline-none focus:border-rose-500" placeholder="?">
+                    <button onclick="checkSbAnswer()" class="btn-3d bg-rose-500 text-white font-bold py-2 px-6 rounded-xl text-lg">Semak</button>
+                </div>
+                <p id="sb-feedback" class="mt-3 font-bold min-h-[24px]"></p>
+            </div>
         </div>
       `;
       updateStory();
     }
-    
-    function updateStory() {
-      const num1El = document.getElementById('sb-num1');
-      const num2El = document.getElementById('sb-num2');
-      const itemEl = document.getElementById('sb-item');
-      
-      const num1 = num1El.value;
-      const num2 = num2El.value;
-      const item = itemEl.value;
-      const imgUrl = itemEl.options[itemEl.selectedIndex].dataset.img;
-      
-      const resultText = `Berapa baki ${item} Ali sekarang?`;
-      const mathText = `${num1} - ${num2} = ?`;
-      
-      document.getElementById('sb-result').textContent = resultText;
-      document.getElementById('sb-math').textContent = mathText;
-      document.getElementById('sb-image').src = imgUrl;
-
-      const answerInput = document.getElementById('sb-answer');
-      if (answerInput) {
-        answerInput.value = '';
-        answerInput.classList.remove('border-green-500', 'bg-green-50', 'border-red-500', 'bg-red-50');
-      }
-      const feedback = document.getElementById('sb-feedback');
-      if (feedback) feedback.textContent = '';
-      
-      const info = `Cerita baru: Ali ada ${num1} ${item}. Dia beri ${num2}. ${resultText} Ayat matematik: ${mathText}`;
-      setInfo(info);
+    window.updateStory = function() {
+        const n1 = document.getElementById('sb-num1').value;
+        const n2 = document.getElementById('sb-num2').value;
+        document.getElementById('sb-math').textContent = `${n1} - ${n2} = ?`;
+        document.getElementById('sb-answer').value = '';
+        document.getElementById('sb-feedback').textContent = '';
     }
-    
-    function checkSbAnswer() {
-      const num1 = parseInt(document.getElementById('sb-num1').value);
-      const num2 = parseInt(document.getElementById('sb-num2').value);
-      const answerInput = document.getElementById('sb-answer');
-      const feedback = document.getElementById('sb-feedback');
-      
-      const userAnswer = parseInt(answerInput.value);
-      const correctAnswer = num1 - num2;
-
-      if (userAnswer === correctAnswer) {
-        feedback.textContent = `Betul! ${num1} - ${num2} = ${correctAnswer}.`;
-        feedback.className = 'text-lg font-semibold mt-2 text-green-600';
-        answerInput.classList.add('border-green-500', 'bg-green-50');
-        answerInput.classList.remove('border-red-500', 'bg-red-50');
-        setInfo(feedback.textContent); speak(feedback.textContent);
-      } else {
-        feedback.textContent = "Cuba lagi. Sila kira semula.";
-        feedback.className = 'text-lg font-semibold mt-2 text-red-600';
-        answerInput.classList.add('border-red-500', 'bg-red-50', 'shake');
-        answerInput.classList.remove('border-green-500', 'bg-green-50');
-        setTimeout(() => answerInput.classList.remove('shake'), 500);
-        setInfo(feedback.textContent); speak(feedback.textContent);
-      }
+    window.checkSbAnswer = function() {
+        const n1 = parseInt(document.getElementById('sb-num1').value);
+        const n2 = parseInt(document.getElementById('sb-num2').value);
+        const ans = parseInt(document.getElementById('sb-answer').value);
+        if(ans === (n1 - n2)) {
+            document.getElementById('sb-feedback').textContent = "Tepat sekali!"; document.getElementById('sb-feedback').className = "mt-3 font-bold text-green-600";
+            triggerWin(); speak("Tepat sekali!");
+        } else {
+            document.getElementById('sb-feedback').textContent = "Salah. Cuba lagi."; document.getElementById('sb-feedback').className = "mt-3 font-bold text-rose-600";
+            document.getElementById('sb-answer').classList.add('shake'); setTimeout(()=>document.getElementById('sb-answer').classList.remove('shake'), 500);
+        }
     }
 
-    /* ====== Kawalan Umum ====== */
-    function clearActivity() {
-      currentActivity = 0;
-      document.getElementById('activity-content').innerHTML = `
-        <div class="text-center py-16">
-          <div class="text-6xl mb-4">🧮</div>
-          <h2 class="text-3xl font-bold text-gray-800 mb-4">Kemahiran Pemulihan: Operasi Tolak</h2>
-          <p class="text-xl text-gray-600 mb-8">Jom teroka operasi tolak dan kaitan dengan tambah.</p>
-          <div class="text-4xl">👇</div>
-        </div>
-      `;
-      setInfo("Pilih aktiviti untuk mula belajar operasi tolak!");
-    }
-    
-    function nextActivity() {
-      if (currentActivity === 0) return loadActivity(1);
-      if (currentActivity < 5) return loadActivity(currentActivity + 1);
-      return loadActivity(1);
-    }
-
-    // Kekalkan TTS resume pada sesetengah pelayar
-    if ('speechSynthesis' in window) {
-      setInterval(() => { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); }, 1000);
-    }
   </script>
 </body>
 </html>
